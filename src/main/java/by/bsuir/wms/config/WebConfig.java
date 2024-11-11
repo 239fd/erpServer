@@ -1,4 +1,4 @@
-package by.wms.server.config;
+package by.bsuir.wms.config;
 
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -9,7 +9,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
-
 
 import java.util.Arrays;
 
@@ -33,8 +32,7 @@ public class WebConfig {
                 HttpMethod.GET.name(),
                 HttpMethod.PUT.name(),
                 HttpMethod.POST.name(),
-                HttpMethod.DELETE.name(),
-                HttpMethod.OPTIONS.name()
+                HttpMethod.DELETE.name()
         ));
         config.setMaxAge(3600L);
         source.registerCorsConfiguration("/**", config);

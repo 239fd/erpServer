@@ -1,6 +1,6 @@
-package by.wms.server.DTO;
+package by.bsuir.wms.DTO;
 
-import by.wms.server.Entity.Enum.Title;
+import by.bsuir.wms.Entity.Enum.Role;
 import lombok.*;
 
 @Getter
@@ -17,7 +17,7 @@ public class EmployeesDTO {
     private String phone;
     private String secondName;
     private String surname;
-    private Title title;
+    private Role role;
     private String organizationId;
     private String token;
 }

@@ -1,7 +1,8 @@
-package by.wms.server.config;
+package by.bsuir.wms.config;
 
-import by.wms.server.DTO.EmployeesDTO;
-import by.wms.server.Service.EmployeesService;
+import by.bsuir.wms.DTO.EmployeesDTO;
+import by.bsuir.wms.Entity.Employees;
+import by.bsuir.wms.Service.EmployeesService;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
@@ -50,4 +51,14 @@ public class UserAuthProvider {
 
         return new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList());
     }
+
+    public Authentication validateTokenEmployees(String token) {
+        JWTVerifier verifier = JWT.require(Algorithm.HMAC256(secretKey)).build();
+        DecodedJWT decodedJWT = verifier.verify(token);
+
+        Employees user = employeesService.findEmployeeByLogin(decodedJWT.getIssuer());
+
+        return new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+    }
+
 }

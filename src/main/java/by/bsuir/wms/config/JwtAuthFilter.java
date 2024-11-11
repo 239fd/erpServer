@@ -1,5 +1,4 @@
-package by.wms.server.config;
-
+package by.bsuir.wms.config;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -30,7 +29,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             if(tokens.length == 2 && tokens[0].equals("Bearer")) {
                 try {
                     SecurityContextHolder.getContext().setAuthentication(
-                            userAuthProvider.validateToken(tokens[1])
+                            userAuthProvider.validateTokenEmployees(tokens[1])
                     );
                 } catch (RuntimeException e){
                     SecurityContextHolder.clearContext();

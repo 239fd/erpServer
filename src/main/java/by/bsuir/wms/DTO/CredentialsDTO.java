@@ -1,7 +1,10 @@
-package by.wms.server.DTO;
+package by.bsuir.wms.DTO;
 
-import by.wms.server.Entity.Enum.Title;
-import lombok.*;
+import by.bsuir.wms.Entity.Enum.Role;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -16,7 +19,7 @@ public class CredentialsDTO {
     private String phone;
     private String secondName;
     private String surname;
-    private Title title;
+    private Role role;
     private String organizationId;
     private String token;
 }

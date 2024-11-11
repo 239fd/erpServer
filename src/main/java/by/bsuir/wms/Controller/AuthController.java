@@ -1,16 +1,14 @@
-package by.wms.server.Controllers;
+package by.bsuir.wms.Controller;
 
-import by.wms.server.API.ApiResponse;
-import by.wms.server.DTO.CredentialsDTO;
-import by.wms.server.DTO.EmployeesDTO;
-import by.wms.server.DTO.SignUpDTO;
-import by.wms.server.Service.EmployeesService;
-import by.wms.server.config.UserAuthProvider;
+import by.bsuir.wms.API.ApiResponse;
+import by.bsuir.wms.DTO.CredentialsDTO;
+import by.bsuir.wms.DTO.EmployeesDTO;
+import by.bsuir.wms.DTO.SignUpDTO;
+import by.bsuir.wms.Service.EmployeesService;
+import by.bsuir.wms.config.UserAuthProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.net.URI;
 
 @CrossOrigin(maxAge = 3600L)
 @RestController
@@ -34,6 +32,7 @@ public class AuthController {
 
         return ResponseEntity.ok(response);
     }
+
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<EmployeesDTO>> register(@RequestBody SignUpDTO signUpDTO) {
         EmployeesDTO employeesDTO = employeesService.register(signUpDTO);
@@ -41,7 +40,19 @@ public class AuthController {
         ApiResponse<EmployeesDTO> response = ApiResponse.<EmployeesDTO>builder()
                 .data(employeesDTO)
                 .status(true)
-                .message("User successfully logged in")
+                .message("User successfully registered in")
+                .build();
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/registerdirector")
+    public ResponseEntity<ApiResponse<EmployeesDTO>> registerDirector(@RequestBody SignUpDTO signUpDTO) {
+        EmployeesDTO employeesDTO = employeesService.registerDirector(signUpDTO);
+        employeesDTO.setToken(userAuthProvider.createToken(signUpDTO.getLogin()));
+        ApiResponse<EmployeesDTO> response = ApiResponse.<EmployeesDTO>builder()
+                .data(employeesDTO)
+                .status(true)
+                .message("User successfully registered in as director")
                 .build();
         return ResponseEntity.ok(response);
     }

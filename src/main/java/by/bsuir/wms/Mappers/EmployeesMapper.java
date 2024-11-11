@@ -1,9 +1,8 @@
-package by.wms.server.Mappers;
+package by.bsuir.wms.Mappers;
 
-import by.wms.server.DTO.CredentialsDTO;
-import by.wms.server.DTO.EmployeesDTO;
-import by.wms.server.DTO.SignUpDTO;
-import by.wms.server.Entity.Employees;
+import by.bsuir.wms.DTO.EmployeesDTO;
+import by.bsuir.wms.DTO.SignUpDTO;
+import by.bsuir.wms.Entity.Employees;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

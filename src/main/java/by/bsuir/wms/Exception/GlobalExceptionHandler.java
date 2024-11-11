@@ -1,10 +1,11 @@
-package by.wms.server.Exceptions;
+package by.bsuir.wms.Exception;
 
+import by.bsuir.wms.API.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import by.wms.server.API.ApiResponse;
+
 import java.util.Collections;
 
 @RestControllerAdvice

@@ -1,4 +1,4 @@
-package by.wms.server.config;
+package by.bsuir.wms.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;

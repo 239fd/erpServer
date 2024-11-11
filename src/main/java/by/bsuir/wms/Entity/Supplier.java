@@ -1,7 +1,35 @@
-package by.bsuir.wms;
+package by.bsuir.wms.Entity;
 
-import jakarta.persistence.Entity;
+import jakarta.persistence.*;
+import lombok.*;
 
+import java.util.List;
+
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 @Entity
+@Table(name = "suppliers")
 public class Supplier {
-  }
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Integer id;
+
+    @Column(name = "INN")
+    private String inn;
+
+    @Column(name = "name")
+    private String name;
+
+    @Column(name = "address")
+    private String address;
+
+    @OneToMany(mappedBy = "supplier", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Stock> stocks;
+
+
+}

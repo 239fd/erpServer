@@ -1,6 +1,6 @@
-package by.wms.server.config;
+package by.bsuir.wms.config;
 
-import by.wms.server.DTO.ErrorDTO;
+import by.bsuir.wms.DTO.ErrorDTO;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
