@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS `mydb`.`products` (
                                                  `id` INT NOT NULL AUTO_INCREMENT,
                                                  `height` DOUBLE NOT NULL,
                                                  `length` DOUBLE NOT NULL,
-                                                 `name` VARCHAR(255) NOT NULL,
+                                                 `name` VARCHAR(255) NOT NULL ,
                                                  `price` DOUBLE NOT NULL,
                                                  `status` ENUM('accepted', 'nonverified', 'writeoff') NOT NULL,
                                                  `unit` VARCHAR(255) NOT NULL,
@@ -91,3 +91,7 @@ CREATE TABLE IF NOT EXISTS `mydb`.`cell_has_products` (
                                                           FOREIGN KEY (`cell_id`) REFERENCES `mydb`.`cell` (`id`),
                                                           FOREIGN KEY (`products_id`) REFERENCES `mydb`.`products` (`id`)
 ) ENGINE = InnoDB;
+ALTER TABLE `mydb`.`cell_has_products`
+    MODIFY COLUMN `products_suppliers_id` INT NOT NULL DEFAULT 0;
+
+ALTER TABLE products MODIFY name VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

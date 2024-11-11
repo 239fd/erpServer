@@ -57,6 +57,9 @@ public class Employees implements UserDetails {
     public boolean isDirector() {
         return role == Role.ROLE_DIRECTOR;
     }
+    public boolean isWorker() {
+        return role == Role.ROLE_WORKER;
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
