@@ -23,7 +23,7 @@ public class GlobalExceptionHandler {
     }
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleAllExceptions(Exception ex) {
-        ApiResponse<Object> response = ApiResponse.<Object>builder()
+        ApiResponse<Object> response = ApiResponse.builder()
                 .data(Collections.emptyList())
                 .status(false)
                 .message("An error occurred: " + ex.getMessage())

@@ -66,7 +66,7 @@ public class WarehouseService {
     }
 
     public void deleteWarehouse(Integer warehouseId) {
-        Employees director = findCurrentDirector();
+        findCurrentDirector();
 
         warehouseRepository.deleteById(warehouseId);
     }
@@ -85,15 +85,16 @@ public class WarehouseService {
     public WarehouseDTO getWarehouse(Integer warehouseId) {
         Employees director = findCurrentDirector();
 
-        Warehouse warehouse = warehouseRepository.findById(warehouseId)
-                .orElseThrow(() -> new RuntimeException("Warehouse not found"));
-
+        Warehouse warehouse = warehouseRepository.findByIdAndOrganizationId(warehouseId, director.getOrganization().getId());
+        if (warehouse == null) {
+            throw new RuntimeException("Warehouse not found");
+        }
         return convertToDTO(warehouse);
     }
 
     public WarehouseDTO updateWarehouse(Integer warehouseId, WarehouseDTO warehouseDTO) {
 
-        Employees director = findCurrentDirector();
+        findCurrentDirector();
 
         Warehouse warehouse = warehouseRepository.findById(warehouseId)
                 .orElseThrow(() -> new RuntimeException("Warehouse not found"));
@@ -123,6 +124,7 @@ public class WarehouseService {
 
     private WarehouseDTO convertToDTO(Warehouse warehouse) {
         return WarehouseDTO.builder()
+                .id(String.valueOf(warehouse.getId()))
                 .name(warehouse.getName())
                 .address(warehouse.getAddress())
                 .build();

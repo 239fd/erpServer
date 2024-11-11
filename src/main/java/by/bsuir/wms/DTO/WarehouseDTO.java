@@ -8,7 +8,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class WarehouseDTO {
+    private String id;
     private String name;
     private String address;
-    private Integer capacity;
 }
