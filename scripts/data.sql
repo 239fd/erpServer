@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS `mydb`.`suppliers` (
-                                                  `id` INT NOT NULL,
+                                                  `id` INT NOT NULL AUTO_INCREMENT,
                                                   `INN` VARCHAR(9) NOT NULL,
                                                   `name` VARCHAR(45) NOT NULL,
                                                   `address` VARCHAR(45) NOT NULL,
@@ -75,9 +75,9 @@ CREATE TABLE IF NOT EXISTS `mydb`.`employees` (
                                                   `phone` VARCHAR(255) NOT NULL,
                                                   `second_name` VARCHAR(255) NOT NULL,
                                                   `surname` VARCHAR(255) NULL DEFAULT NULL,
-                                                  `title` ENUM('director', 'accountant', 'worker','manager') NOT NULL,
-                                                  `organization_id` INT NOT NULL,
-                                                  `warehouse_id` INT NOT NULL,
+                                                  `title` ENUM('ROLE_DIRECTOR', 'ROLE_ACCOUNTANT', 'ROLE_WORKER','ROLE_MANAGER') NOT NULL,
+                                                  `organization_id` INT ,
+                                                  `warehouse_id` INT ,
                                                   PRIMARY KEY (`id`),
                                                   FOREIGN KEY (`organization_id`) REFERENCES `mydb`.`organization` (`id`),
                                                   FOREIGN KEY (`warehouse_id`) REFERENCES `mydb`.`warehouse` (`id`)
