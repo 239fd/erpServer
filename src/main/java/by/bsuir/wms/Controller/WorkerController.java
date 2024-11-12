@@ -1,5 +1,6 @@
 package by.bsuir.wms.Controller;
 
+import by.bsuir.wms.DTO.DispatchDTO;
 import by.bsuir.wms.DTO.ProductDTO;
 import by.bsuir.wms.Service.ProductService;
 import com.itextpdf.text.DocumentException;
@@ -31,9 +32,20 @@ public class WorkerController {
                 .body(pdfContent);
     }
 
-//    @PostMapping("/dispatch")
-//    public ResponseEntity<String> dispatchProducts(@RequestParam List<Integer> productIds, @RequestParam String documentFormat, @RequestBody String additionalInfo) {
-//        String response = productService.dispatchProducts(productIds, documentFormat, additionalInfo);
-//        return ResponseEntity.ok(response);
-//    }
+    @PostMapping("/dispatch")
+    public ResponseEntity<byte[]> dispatchProducts(@RequestBody DispatchDTO dispatchDTO) {
+        try {
+            byte[] pdfContent = productService.dispatchProducts(dispatchDTO);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", "dispatch_order.pdf");
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(pdfContent);
+        } catch (DocumentException | IOException e) {
+            return ResponseEntity.status(500).body(null);
+        }
+    }
 }
