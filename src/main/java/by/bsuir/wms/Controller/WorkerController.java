@@ -1,5 +1,6 @@
 package by.bsuir.wms.Controller;
 
+import by.bsuir.wms.API.ApiResponse;
 import by.bsuir.wms.DTO.DispatchDTO;
 import by.bsuir.wms.DTO.ProductDTO;
 import by.bsuir.wms.Service.ProductService;
@@ -53,5 +54,29 @@ public class WorkerController {
         } catch (DocumentException | IOException e) {
             return ResponseEntity.status(500).body(null);
         }
+    }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<ProductDTO>>> getStoredProducts() {
+        List<ProductDTO> productDTOs = productService.getStoredProducts();
+        ApiResponse<List<ProductDTO>> response = ApiResponse.<List<ProductDTO>>builder()
+                .data(productDTOs)
+                .status(true)
+                .message("Products get successful!")
+                .build();
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/find")
+        public ResponseEntity<ApiResponse<String>> getProductLocation(@RequestBody int productId) {
+        String location = productService.getProductLocation(productId);
+
+        ApiResponse<String> response = ApiResponse.<String>builder()
+                .data(location)
+                .status(true)
+                .message("Product location found successfully")
+                .build();
+
+        return ResponseEntity.ok(response);
     }
 }

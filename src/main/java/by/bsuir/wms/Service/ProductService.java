@@ -13,6 +13,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,28 +42,31 @@ public class ProductService {
         List<Integer> ids = new ArrayList<>();
         List<ProductDTO> placedProducts = new ArrayList<>();
         List<Object> dataForSave = new ArrayList<>();
+
         for (ProductDTO productDTO : productDTOs) {
             boolean productPlaced = false;
+
             for (Rack rack : racks) {
-                double usedCapacity = 0;
                 List<Cell> cells = cellRepository.findAllByRackId(rack.getId());
 
                 for (Cell cell : cells) {
-                    for (Product product : cell.getProducts()) {
-                        usedCapacity += product.getWeight();
-                    }
-                }
 
-                double availableCapacity = rack.getCapacity() - usedCapacity;
+                    double cellVolume = cell.getLength() * cell.getWidth() * cell.getHeight();
 
-                if (availableCapacity >= productDTO.getWeight()) {
-                    for (Cell cell : cells) {
+                    double usedVolume = cell.getProducts().stream()
+                            .mapToDouble(p -> p.getLength() * p.getWidth() * p.getHeight())
+                            .sum();
+
+                    double availableVolume = cellVolume - usedVolume;
+
+                    double productVolume = productDTO.getLength() * productDTO.getWidth() * productDTO.getHeight();
+
+                    if (availableVolume >= productVolume && rack.getCapacity() >= productDTO.getWeight() + usedCapacityInRack(rack)) {
                         if (cell.getLength() >= productDTO.getLength() &&
                                 cell.getWidth() >= productDTO.getWidth() &&
                                 cell.getHeight() >= productDTO.getHeight()) {
 
                             Product product = getProduct(productDTO);
-
                             product.getCells().add(cell);
                             dataForSave.add(product);
 
@@ -73,20 +77,18 @@ public class ProductService {
                             productPlaced = true;
                             break;
                         }
-
                     }
-                    if (productPlaced) {
-                        break;
-                    }
+                }
+                if (productPlaced) {
+                    break;
                 }
             }
 
             if (!productPlaced) {
                 throw new AppException("No suitable rack or cell found for product: " + productDTO.getName(), HttpStatus.BAD_REQUEST);
-            }
-            else{
-                if(dataForSave.size()/2 == productDTOs.size()) {
-                    for(int i = 0; i < dataForSave.size(); i += 2) {
+            } else {
+                if (dataForSave.size() / 2 == productDTOs.size()) {
+                    for (int i = 0; i < dataForSave.size(); i += 2) {
                         Product product = (Product) dataForSave.get(i);
                         productRepository.save(product);
                         ids.add(product.getId());
@@ -98,6 +100,15 @@ public class ProductService {
         }
         return pdfService.generateReceiptOrderPDF(placedProducts, ids);
     }
+
+    private double usedCapacityInRack(Rack rack) {
+        return rack.getCells().stream()
+                .flatMap(cell -> cell.getProducts().stream())
+                .mapToDouble(Product::getWeight)
+                .sum();
+    }
+
+
 
     public Map<String, byte[]> dispatchProducts(DispatchDTO dispatchDTO) throws DocumentException, IOException {
 
@@ -124,7 +135,6 @@ public class ProductService {
                 .collect(Collectors.toList());
 
         boolean check = true;
-
         for(int i = 0; i < products.size(); i++){
             Product product = products.get(i);
             int dispatchAmount = dispatchDTO.getAmounts().get(i);
@@ -165,7 +175,41 @@ public class ProductService {
 
         return pdfFiles;
     }
+    public List<ProductDTO> getStoredProducts() {
+        Employees worker = findCurrentWorker();
+        Warehouse warehouse = warehouseRepository.findWarehouseByEmployeesId(worker.getId())
+                .orElseThrow(() -> new AppException("No warehouse for this user", HttpStatus.CONFLICT));
+
+        List<Product> productDTOs = productRepository.findAllByCells_Rack_Warehouse(warehouse);
+        List<ProductDTO> productDTOList = new ArrayList<>();
+        for(Product product : productDTOs){
+            productDTOList.add(convertToDTO(product));
+        }
+        System.out.println(productDTOList.get(0).getBestBeforeDate());
+        if(productDTOList.isEmpty()){
+            throw new AppException("No products found for current warehouse", HttpStatus.CONFLICT);
+        }
+        return productDTOList;
+    }
+    public String getProductLocation(int id){
+        Employees worker = findCurrentWorker();
+        warehouseRepository.findWarehouseByEmployeesId(worker.getId())
+                .orElseThrow(() -> new AppException("No warehouse for this user", HttpStatus.CONFLICT));
+
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new AppException("Product not found", HttpStatus.NOT_FOUND));
+
+        if (product.getCells().isEmpty()) {
+            throw new AppException("Product is not located in any cell", HttpStatus.NOT_FOUND);
+        }
+
+        Cell cell = product.getCells().iterator().next();
+        Rack rack = cell.getRack();
+
+        return "Стеллаж: " + rack.getId() + ", Ячейка: " + cell.getId();
+    }
     private ProductDTO convertToDTO(Product product) {
+
         return ProductDTO.builder()
                 .name(product.getName())
                 .unit(product.getUnit())
@@ -175,6 +219,7 @@ public class ProductService {
                 .length(product.getLength())
                 .width(product.getWidth())
                 .weight(product.getWeight())
+                .bestBeforeDate(product.getBestBeforeDate())
                 .build();
     }
     private static Product getProduct(ProductDTO productDTO) {
@@ -209,8 +254,6 @@ public class ProductService {
 /*
 TODO
  1)if from supplier do key
- 2)A lot of things in one cell
- 3)TTN creating
  4)Delete if 0
  5)Store products not like amount
 */

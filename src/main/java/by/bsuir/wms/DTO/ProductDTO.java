@@ -1,5 +1,6 @@
 package by.bsuir.wms.DTO;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 
 import java.sql.Date;
@@ -17,6 +18,7 @@ public class ProductDTO {
     private Double length;
     private Double width;
     private Double weight;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private Date bestBeforeDate;
     private Integer amount;
 }

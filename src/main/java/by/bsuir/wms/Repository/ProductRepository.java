@@ -9,4 +9,5 @@ import java.util.List;
 public interface ProductRepository extends JpaRepository<Product, Integer> {
 
     Product findAllByIdAndCells_Rack_Warehouse(Integer id, Warehouse warehouse);
+    List<Product> findAllByCells_Rack_Warehouse(Warehouse warehouse);
 }
