@@ -2,11 +2,7 @@ package by.bsuir.wms.Service;
 
 import by.bsuir.wms.DTO.DispatchDTO;
 import by.bsuir.wms.DTO.ProductDTO;
-import com.itextpdf.text.Document;
-import com.itextpdf.text.DocumentException;
-import com.itextpdf.text.Element;
-import com.itextpdf.text.Font;
-import com.itextpdf.text.PageSize;
+import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +16,7 @@ public class PDFService {
     private static final String FONT_PATH = "src/main/resources/fonts/arial.ttf";
     private int counter = 1;
 
-    public byte[] generateReceiptOrderPDF(List<ProductDTO> products) throws DocumentException, IOException {
+    public byte[] generateReceiptOrderPDF(List<ProductDTO> products, List<Integer> ids) throws DocumentException, IOException {
         Document document = new Document(PageSize.A4);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
@@ -41,8 +37,8 @@ public class PDFService {
         addTableHeader(table, headerFont);
 
         int rowIndex = 1;
-        for (ProductDTO product : products) {
-            addProductRow(table, product, rowIndex, regularFont);
+        for (int i = 0; i < products.size(); i++) {
+            addProductRow(table, products.get(i), rowIndex, regularFont, ids.get(i));
             rowIndex++;
         }
 
@@ -52,7 +48,7 @@ public class PDFService {
         return outputStream.toByteArray();
     }
 
-    public byte[] generateDispatchOrderPDF(List<ProductDTO> products) throws DocumentException, IOException {
+    public byte[] generateDispatchOrderPDF(List<ProductDTO> products, List<Integer> ids) throws DocumentException, IOException {
         Document document = new Document(PageSize.A4);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
@@ -73,8 +69,8 @@ public class PDFService {
         addTableHeader(table, headerFont);
 
         int rowIndex = 1;
-        for (ProductDTO product : products) {
-            addProductRow(table, product, rowIndex, regularFont);
+        for (int i = 0; i < products.size(); i++) {
+            addProductRow(table, products.get(i), rowIndex, regularFont, ids.get(i));
             rowIndex++;
         }
 
@@ -85,38 +81,53 @@ public class PDFService {
     }
 
     public byte[] generateTTN(DispatchDTO dispatchDTO, List<ProductDTO> products) throws DocumentException, IOException {
-        Document document = new Document(PageSize.A4);
+        Document document = new Document(PageSize.A4.rotate());
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         PdfWriter.getInstance(document, outputStream);
         document.open();
 
         BaseFont baseFont = BaseFont.createFont(FONT_PATH, BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
-        Font headerFont = new Font(baseFont, 12, Font.BOLD);
+        Font headerFont = new Font(baseFont, 14, Font.BOLD);
         Font regularFont = new Font(baseFont, 10);
 
-        document.add(new com.itextpdf.text.Paragraph("ТОВАРНО-ТРАНСПОРТНАЯ НАКЛАДНАЯ", headerFont));
-        document.add(new com.itextpdf.text.Paragraph("Номер: " + dispatchDTO.getDocumentNumber(), regularFont));
-        document.add(new com.itextpdf.text.Paragraph("Дата: " + dispatchDTO.getDocumentDate(), regularFont));
+        Paragraph title = new Paragraph("ТОВАРНО-ТРАНСПОРТНАЯ НАКЛАДНАЯ", headerFont);
+        title.setAlignment(Element.ALIGN_CENTER);
+        document.add(title);
 
-        document.add(new com.itextpdf.text.Paragraph("Автомобиль: " + dispatchDTO.getVehicle(), regularFont));
-        document.add(new com.itextpdf.text.Paragraph("Водитель: " + dispatchDTO.getDriverName(), regularFont));
-        document.add(new com.itextpdf.text.Paragraph("Грузоотправитель: " + dispatchDTO.getOrganizationName(), regularFont));
-        document.add(new com.itextpdf.text.Paragraph("Адрес грузоотправителя: " + dispatchDTO.getOrganizationAddress(), regularFont));
-        document.add(new com.itextpdf.text.Paragraph("Грузополучатель: " + dispatchDTO.getCustomerName(), regularFont));
-        document.add(new com.itextpdf.text.Paragraph("Адрес грузополучателя: " + dispatchDTO.getCustomerAddress(), regularFont));
+        document.add(new Paragraph("Номер: " + dispatchDTO.getDocumentNumber(), regularFont));
+        document.add(new Paragraph("Дата: " + dispatchDTO.getDocumentDate(), regularFont));
+        document.add(new Paragraph("Автомобиль: " + dispatchDTO.getVehicle(), regularFont));
+        document.add(new Paragraph("Водитель: " + dispatchDTO.getDriverName(), regularFont));
+        document.add(new Paragraph("Грузоотправитель: " + dispatchDTO.getOrganizationName(), regularFont));
+        document.add(new Paragraph("Адрес грузоотправителя: " + dispatchDTO.getOrganizationAddress(), regularFont));
+        document.add(new Paragraph("Грузополучатель: " + dispatchDTO.getCustomerName(), regularFont));
+        document.add(new Paragraph("Адрес грузополучателя: " + dispatchDTO.getCustomerAddress(), regularFont));
 
-        PdfPTable table = new PdfPTable(7);
+        PdfPTable table = new PdfPTable(10);
         table.setWidthPercentage(100);
         table.setSpacingBefore(10f);
+        table.setWidths(new float[] {1, 3, 1.5f, 2, 2, 2, 2, 2, 2, 1.5f});
 
-        addTableHeader(table, headerFont);
+        addTTNTableHeader(table, regularFont);
 
         int rowIndex = 1;
         for (ProductDTO product : products) {
-            addProductRow(table, product, rowIndex, regularFont);
+            addTTNProductRow(table, product, rowIndex, regularFont);
             rowIndex++;
         }
+
+        PdfPCell totalCell = new PdfPCell(new Paragraph("Итого:", regularFont));
+        totalCell.setColspan(3);
+        totalCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        table.addCell(totalCell);
+
+        table.addCell(new PdfPCell(new Paragraph("X", regularFont)));
+        table.addCell(new PdfPCell(new Paragraph("X", regularFont)));
+        table.addCell(new PdfPCell(new Paragraph("X", regularFont)));
+        table.addCell(new PdfPCell(new Paragraph("X", regularFont)));
+        table.addCell(new PdfPCell(new Paragraph("", regularFont)));
+        table.addCell(new PdfPCell(new Paragraph("", regularFont)));
 
         document.add(table);
         document.close();
@@ -124,8 +135,44 @@ public class PDFService {
         return outputStream.toByteArray();
     }
 
+    private void addTTNTableHeader(PdfPTable table, Font font) {
+        String[] headers = {
+                "№", "Наименование товара", "Ед. изм.", "Количество",
+                "Цена руб.", "Стоимость руб.", "Ставка НДС %", "Сумма НДС руб.",
+                "Стоимость с НДС руб.", "Масса груза, кг"
+        };
+
+        for (String header : headers) {
+            PdfPCell cell = new PdfPCell(new Paragraph(header, font));
+            cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+            cell.setPadding(5);
+            table.addCell(cell);
+        }
+    }
+
+    private void addTTNProductRow(PdfPTable table, ProductDTO product, int rowIndex, Font font) {
+        table.addCell(new PdfPCell(new Paragraph(String.valueOf(rowIndex), font)));
+        table.addCell(new PdfPCell(new Paragraph(product.getName(), font)));
+        table.addCell(new PdfPCell(new Paragraph(product.getUnit(), font)));
+        table.addCell(new PdfPCell(new Paragraph(String.valueOf(product.getAmount()), font)));
+        table.addCell(new PdfPCell(new Paragraph(String.valueOf(product.getPrice()), font)));
+
+        double cost = product.getPrice() * product.getAmount();
+        table.addCell(new PdfPCell(new Paragraph(String.format("%.2f", cost), font)));
+
+        double vatRate = 20;
+        double vatAmount = cost * vatRate / 100;
+        double totalWithVAT = cost + vatAmount;
+
+        table.addCell(new PdfPCell(new Paragraph(String.valueOf(vatRate), font)));
+        table.addCell(new PdfPCell(new Paragraph(String.format("%.2f", vatAmount), font)));
+        table.addCell(new PdfPCell(new Paragraph(String.format("%.2f", totalWithVAT), font)));
+        table.addCell(new PdfPCell(new Paragraph(String.valueOf(product.getWeight()), font)));
+    }
+
     private void addTableHeader(PdfPTable table, Font font) {
-        String[] headers = {"Наименование", "Код", "Код (номенкл.)", "Наименование ед. изм.",
+        String[] headers = {"Номер","Наимен-ние", "Код", "Наименование ед. изм.",
                 "Кол-во по документу", "Кол-во принято", "Цена"};
 
         for (String header : headers) {
@@ -134,37 +181,11 @@ public class PDFService {
             table.addCell(cell);
         }
     }
-    public byte[] combinePDFs(byte[] pdf1, byte[] pdf2) throws IOException, DocumentException {
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        com.itextpdf.text.Document document = new com.itextpdf.text.Document();
-        PdfWriter writer = PdfWriter.getInstance(document, outputStream);
-        document.open();
 
-        PdfReader reader1 = new PdfReader(pdf1);
-        PdfReader reader2 = new PdfReader(pdf2);
-
-        PdfContentByte content = writer.getDirectContent();
-
-        for (int i = 1; i <= reader1.getNumberOfPages(); i++) {
-            document.newPage();
-            content.addTemplate(writer.getImportedPage(reader1, i), 0, 0);
-        }
-
-        for (int i = 1; i <= reader2.getNumberOfPages(); i++) {
-            document.newPage();
-            content.addTemplate(writer.getImportedPage(reader2, i), 0, 0);
-        }
-
-        document.close();
-        reader1.close();
-        reader2.close();
-
-        return outputStream.toByteArray();
-    }
-    private void addProductRow(PdfPTable table, ProductDTO product, int rowIndex, Font font) {
+    private void addProductRow(PdfPTable table, ProductDTO product, int rowIndex, Font font, int id) {
         table.addCell(new PdfPCell(new com.itextpdf.text.Paragraph(String.valueOf(rowIndex), font)));
         table.addCell(new PdfPCell(new com.itextpdf.text.Paragraph(product.getName(), font)));
-        table.addCell(new PdfPCell(new com.itextpdf.text.Paragraph("", font))); // Если нет кода, оставляем пустым
+        table.addCell(new PdfPCell(new com.itextpdf.text.Paragraph(String.valueOf(id), font)));
         table.addCell(new PdfPCell(new com.itextpdf.text.Paragraph(product.getUnit(), font)));
         table.addCell(new PdfPCell(new com.itextpdf.text.Paragraph(String.valueOf(product.getAmount()), font)));
         table.addCell(new PdfPCell(new com.itextpdf.text.Paragraph(String.valueOf(product.getAmount()), font)));

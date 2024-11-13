@@ -15,7 +15,9 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,7 +38,7 @@ public class ProductService {
 
         List<Rack> racks = rackRepository.findRacksByWarehouse(warehouse)
                 .orElseThrow(() -> new RuntimeException("No racks in warehouse for this user"));
-
+        List<Integer> ids = new ArrayList<>();
         List<ProductDTO> placedProducts = new ArrayList<>();
         List<Object> dataForSave = new ArrayList<>();
         for (ProductDTO productDTO : productDTOs) {
@@ -87,28 +89,28 @@ public class ProductService {
                     for(int i = 0; i < dataForSave.size(); i += 2) {
                         Product product = (Product) dataForSave.get(i);
                         productRepository.save(product);
+                        ids.add(product.getId());
                         Cell cell = (Cell) dataForSave.get(i + 1);
                         cellRepository.save(cell);
                     }
                 }
             }
         }
-        return pdfService.generateReceiptOrderPDF(placedProducts);
+        return pdfService.generateReceiptOrderPDF(placedProducts, ids);
     }
-    public byte[] dispatchProducts(DispatchDTO dispatchDTO) throws DocumentException, IOException {
+
+    public Map<String, byte[]> dispatchProducts(DispatchDTO dispatchDTO) throws DocumentException, IOException {
 
         Employees worker = findCurrentWorker();
         Warehouse warehouse = warehouseRepository.findWarehouseByEmployeesId(worker.getId())
                 .orElseThrow(() -> new AppException("No warehouse for this user", HttpStatus.CONFLICT));
 
         List<Product> products = new ArrayList<>();
-
         for(int i = 0; i < dispatchDTO.getProductIds().size(); i++) {
             products.add(productRepository.findAllByIdAndCells_Rack_Warehouse(dispatchDTO.getProductIds().get(i), warehouse));
         }
 
         for (Product value : products) {
-            System.out.println(value);
             if (value == null) {
                 throw new AppException("Mistake with your input", HttpStatus.CONFLICT);
             }
@@ -125,9 +127,6 @@ public class ProductService {
 
         for(int i = 0; i < products.size(); i++){
             Product product = products.get(i);
-            System.out.println("am " + product.getAmount());
-            System.out.println("dm " + dispatchDTO.getAmounts().get(i));
-
             int dispatchAmount = dispatchDTO.getAmounts().get(i);
 
             if (product.getAmount() < dispatchAmount) {
@@ -136,10 +135,7 @@ public class ProductService {
             }
         }
 
-
         if(check){
-            System.out.println("check is " );
-
             for (int i = 0; i < products.size(); i++) {
                 Product product = products.get(i);
                 int dispatchAmount = dispatchDTO.getAmounts().get(i);
@@ -160,10 +156,14 @@ public class ProductService {
         }
 
 
-        byte[] orderPDF = pdfService.generateDispatchOrderPDF(productDTOs);
+        byte[] orderPDF = pdfService.generateDispatchOrderPDF(productDTOs, dispatchDTO.getProductIds());
         byte[] ttnPDF = pdfService.generateTTN(dispatchDTO, productDTOs);
 
-        return pdfService.combinePDFs(orderPDF, ttnPDF);
+        Map<String, byte[]> pdfFiles = new HashMap<>();
+        pdfFiles.put("dispatch_order.pdf", orderPDF);
+        pdfFiles.put("ttn.pdf", ttnPDF);
+
+        return pdfFiles;
     }
     private ProductDTO convertToDTO(Product product) {
         return ProductDTO.builder()
@@ -212,4 +212,5 @@ TODO
  2)A lot of things in one cell
  3)TTN creating
  4)Delete if 0
+ 5)Store products not like amount
 */
