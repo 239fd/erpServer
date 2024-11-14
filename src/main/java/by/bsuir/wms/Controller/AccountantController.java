@@ -59,9 +59,9 @@ public class AccountantController {
     }
 
     @PostMapping("/revaluation")
-    public ResponseEntity<byte[]> revaluateProducts(@RequestBody List<RevaluationDTO> revaluationList) {
+    public ResponseEntity<byte[]> revaluateProducts(@RequestBody RevaluationDTO revaluationDTO) {
         try {
-            byte[] pdfContent = productService.revaluateProducts(revaluationList);
+            byte[] pdfContent = productService.revaluateProducts(revaluationDTO);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);

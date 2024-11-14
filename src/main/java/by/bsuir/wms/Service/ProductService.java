@@ -100,25 +100,51 @@ public class ProductService {
         return pdfService.generateWriteOffAct(worker.getOrganization().getName(), LocalDate.parse(writeOffDTO.getDate()), "бухгалтер " + worker.getSecondName() + " " + worker.getFirstName(), productDTOs);
     }
 
-    public byte[] revaluateProducts(List<RevaluationDTO> revaluationList) throws DocumentException, IOException {
-        List<ProductDTO> updatedProducts = new ArrayList<>();
+    public byte[] revaluateProducts(RevaluationDTO revaluationDTO) throws DocumentException, IOException {
 
         Employees worker = findAccountant();
         warehouseRepository.findWarehouseByEmployeesId(worker.getId())
                 .orElseThrow(() -> new RuntimeException("No warehouse for this user"));
 
-        for (RevaluationDTO dto : revaluationList) {
-            Product product = productRepository.findById(dto.getProductId())
+        List<Product> products = new ArrayList<>();
+        for(int i = 0; i < revaluationDTO.getProductIds().size(); i++) {
+            Product product = productRepository.findById(revaluationDTO.getProductIds().get(i))
                     .orElseThrow(() -> new AppException("Product not found", HttpStatus.NOT_FOUND));
-
-            product.setPrice(dto.getNewPrice());
-            productRepository.save(product);
-
-            updatedProducts.add(convertToDTO(product));
+            products.add(product);
         }
 
-        return pdfService.generateRevaluationAct(revaluationList, updatedProducts);
+        List<Integer> productIds = revaluationDTO.getProductIds();
+        List<Double> newPrices = revaluationDTO.getNewPrice();
+
+        if (productIds.size() != newPrices.size()) {
+            throw new AppException("Mismatch between product IDs and prices", HttpStatus.BAD_REQUEST);
+        }
+
+        List<ProductDTO> revaluatedProducts = new ArrayList<>();
+        List<Double> revaluatedPrices = new ArrayList<>();
+        for (int i = 0; i < products.size(); i++) {
+            Product product = products.get(i);
+            double oldPrice = product.getPrice();
+            double newPrice = newPrices.get(i);
+            int quantity = product.getAmount();
+
+            product.setPrice(newPrice);
+            productRepository.save(product);
+
+            ProductDTO productDTO = ProductDTO.builder()
+                    .name(product.getName())
+                    .unit(product.getUnit())
+                    .amount(quantity)
+                    .price(oldPrice)
+                    .build();
+            revaluatedProducts.add(productDTO);
+            revaluatedPrices.add(newPrice);
+        }
+
+        // Generate PDF report
+        return pdfService.generateRevaluationReport(revaluatedProducts, revaluatedPrices);
     }
+
 
     public byte[] addProductToCell(List<ProductDTO> productDTOs) throws DocumentException, IOException {
         Employees worker = findCurrentWorker();

@@ -2,12 +2,14 @@ package by.bsuir.wms.DTO;
 
 import lombok.*;
 
+import java.util.List;
+
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class RevaluationDTO {
-    private int productId;
-    private double newPrice;
+    private List<Integer> productIds;
+    private List<Double> newPrice;
 }

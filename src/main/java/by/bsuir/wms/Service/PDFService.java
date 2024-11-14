@@ -2,8 +2,6 @@ package by.bsuir.wms.Service;
 
 import by.bsuir.wms.DTO.DispatchDTO;
 import by.bsuir.wms.DTO.ProductDTO;
-import by.bsuir.wms.DTO.RevaluationDTO;
-import by.bsuir.wms.DTO.WriteOffDTO;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
 import org.springframework.stereotype.Service;
@@ -334,9 +332,8 @@ public class PDFService {
         return outputStream.toByteArray();
     }
 
+    public byte[] generateRevaluationReport(List<ProductDTO> products, List<Double> prices) throws DocumentException, IOException {
 
-
-    public byte[] generateRevaluationAct(List<RevaluationDTO> revaluationList, List<ProductDTO> products) throws DocumentException, IOException {
         Document document = new Document(PageSize.A4);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
@@ -344,45 +341,47 @@ public class PDFService {
         document.open();
 
         BaseFont baseFont = BaseFont.createFont(FONT_PATH, BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
-        Font headerFont = new Font(baseFont, 12, Font.BOLD);
+        Font headerFont = new Font(baseFont, 14, Font.BOLD);
         Font regularFont = new Font(baseFont, 10);
 
-        document.add(new Paragraph("Акт переоценки товаров", headerFont));
+        document.add(new Paragraph("АКТ ПЕРЕОЦЕНКИ", headerFont));
         document.add(new Paragraph("Дата: " + java.time.LocalDate.now(), regularFont));
         document.add(new Paragraph(" "));
 
-        PdfPTable table = new PdfPTable(5);
+        PdfPTable table = new PdfPTable(6);
         table.setWidthPercentage(100);
         table.setSpacingBefore(10f);
 
-        addRevaluationTableHeader(table, headerFont);
+        String[] headers = {"Наименование товара", "Единица измерения", "Количество", "Старая цена", "Новая цена", "Разница"};
+        for (String header : headers) {
+            PdfPCell cell = new PdfPCell(new Paragraph(header, regularFont));
+            cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            table.addCell(cell);
+        }
 
-        for (int i = 0; i < revaluationList.size(); i++) {
-            RevaluationDTO revaluation = revaluationList.get(i);
-            ProductDTO product = products.get(i);
-            addRevaluationRow(table, product, revaluation, regularFont);
+        double totalDifference = 0;
+
+        for (int i = 0; i < products.size(); i++) {
+            double oldPrice = products.get(i).getPrice();
+            double newPrice = prices.get(i);
+            double difference = (newPrice - oldPrice) * products.get(i).getAmount();
+            totalDifference += difference;
+
+            table.addCell(new PdfPCell(new Paragraph(products.get(i).getName(), regularFont)));
+            table.addCell(new PdfPCell(new Paragraph(products.get(i).getUnit(), regularFont)));
+            table.addCell(new PdfPCell(new Paragraph(String.valueOf(products.get(i).getAmount()), regularFont)));
+            table.addCell(new PdfPCell(new Paragraph(String.format("%.2f", oldPrice), regularFont)));
+            table.addCell(new PdfPCell(new Paragraph(String.format("%.2f", newPrice), regularFont)));
+            table.addCell(new PdfPCell(new Paragraph(String.format("%.2f", difference), regularFont)));
         }
 
         document.add(table);
+
+        document.add(new Paragraph("Итоговая разница: " + String.format("%.2f", totalDifference), regularFont));
+
         document.close();
 
         return outputStream.toByteArray();
     }
 
-    private void addRevaluationTableHeader(PdfPTable table, Font font) {
-        String[] headers = {"ID", "Наименование", "Старая цена", "Новая цена", "Разница"};
-        for (String header : headers) {
-            PdfPCell cell = new PdfPCell(new Paragraph(header, font));
-            cell.setHorizontalAlignment(Element.ALIGN_CENTER);
-            table.addCell(cell);
-        }
-    }
-
-    private void addRevaluationRow(PdfPTable table, ProductDTO product, RevaluationDTO revaluation, Font font) {
-        table.addCell(new PdfPCell(new Paragraph(String.valueOf(product.getId()), font)));
-        table.addCell(new PdfPCell(new Paragraph(product.getName(), font)));
-        table.addCell(new PdfPCell(new Paragraph(String.valueOf(product.getPrice()), font)));
-        table.addCell(new PdfPCell(new Paragraph(String.valueOf(revaluation.getNewPrice()), font)));
-        table.addCell(new PdfPCell(new Paragraph(String.valueOf(revaluation.getNewPrice() - product.getPrice()), font)));
-    }
 }
