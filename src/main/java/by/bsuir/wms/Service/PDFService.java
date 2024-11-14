@@ -2,6 +2,8 @@ package by.bsuir.wms.Service;
 
 import by.bsuir.wms.DTO.DispatchDTO;
 import by.bsuir.wms.DTO.ProductDTO;
+import by.bsuir.wms.DTO.RevaluationDTO;
+import by.bsuir.wms.DTO.WriteOffDTO;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
 import org.springframework.stereotype.Service;
@@ -190,5 +192,167 @@ public class PDFService {
         table.addCell(new PdfPCell(new com.itextpdf.text.Paragraph(String.valueOf(product.getAmount()), font)));
         table.addCell(new PdfPCell(new com.itextpdf.text.Paragraph(String.valueOf(product.getAmount()), font)));
         table.addCell(new PdfPCell(new com.itextpdf.text.Paragraph(String.valueOf(product.getPrice()), font)));
+    }
+
+    public byte[] generateInventoryReport(String organizationName, String warehouseName, List<ProductDTO> products, List<Integer> expectedQuantities, List<Integer> ids) throws DocumentException, IOException {
+        Document document = new Document(PageSize.A4);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        PdfWriter.getInstance(document, outputStream);
+        document.open();
+
+        BaseFont baseFont = BaseFont.createFont(FONT_PATH, BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+        Font headerFont = new Font(baseFont, 12, Font.BOLD);
+        Font regularFont = new Font(baseFont, 10);
+
+        document.add(new Paragraph("ИНВЕНТАРИЗАЦИОННАЯ ОПИСЬ", headerFont));
+        document.add(new Paragraph("Организация: " + organizationName, regularFont));
+        document.add(new Paragraph("Склад: " + warehouseName, regularFont));
+        document.add(new Paragraph("Дата: " + java.time.LocalDate.now(), regularFont));
+        document.add(new Paragraph(" "));
+
+        PdfPTable table = new PdfPTable(5);
+        table.setWidthPercentage(100);
+        table.setSpacingBefore(10f);
+
+        addInventoryTableHeader(table, headerFont);
+
+        int totalQuantity = 0;
+        double totalPrice = 0;
+
+        for (int i = 0; i < products.size(); i++) {
+            ProductDTO product = products.get(i);
+            int quantity = expectedQuantities.get(i);
+            double price = product.getPrice();
+            int id = ids.get(i);
+
+            totalQuantity += quantity;
+            totalPrice += quantity * price;
+
+            addInventoryRow(table, product, quantity, regularFont, id);
+        }
+
+        document.add(table);
+
+        document.add(new Paragraph("Итого по описи:", regularFont));
+        document.add(new Paragraph("Общее количество единиц фактически: " + totalQuantity, regularFont));
+        document.add(new Paragraph("На сумму, руб. фактически: " + String.format("%.2f", totalPrice), regularFont));
+
+        document.close();
+
+        return outputStream.toByteArray();
+    }
+
+    private void addInventoryRow(PdfPTable table, ProductDTO product, int expectedQuantity, Font font, int id) {
+        table.addCell(new PdfPCell(new Paragraph(String.valueOf(id), font)));
+        table.addCell(new PdfPCell(new Paragraph(product.getName(), font)));
+        table.addCell(new PdfPCell(new Paragraph(String.valueOf(product.getAmount()), font)));
+        table.addCell(new PdfPCell(new Paragraph(String.valueOf(expectedQuantity), font)));
+        table.addCell(new PdfPCell(new Paragraph(String.valueOf(product.getAmount() - expectedQuantity), font)));
+    }
+
+    private void addInventoryTableHeader(PdfPTable table, Font font) {
+        String[] headers = {"ID", "Наименование", "Ожидаемое количество","Фактическое количество",  "Разница"};
+        for (String header : headers) {
+            PdfPCell cell = new PdfPCell(new Paragraph(header, font));
+            cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            table.addCell(cell);
+        }
+    }
+
+    public byte[] generateWriteOffAct(WriteOffDTO writeOffDTO, ProductDTO product) throws DocumentException, IOException {
+        Document document = new Document(PageSize.A4);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        PdfWriter.getInstance(document, outputStream);
+        document.open();
+
+        BaseFont baseFont = BaseFont.createFont(FONT_PATH, BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+        Font headerFont = new Font(baseFont, 12, Font.BOLD);
+        Font regularFont = new Font(baseFont, 10);
+
+        document.add(new Paragraph("Акт на списание материала", headerFont));
+        document.add(new Paragraph("Дата: " + writeOffDTO.getDate(), regularFont));
+        document.add(new Paragraph("Причина списания: " + writeOffDTO.getReason(), regularFont));
+        document.add(new Paragraph(" "));
+
+        PdfPTable table = new PdfPTable(4);
+        table.setWidthPercentage(100);
+        table.setSpacingBefore(10f);
+
+        addWriteOffTableHeader(table, headerFont);
+
+        addWriteOffRow(table, product, writeOffDTO.getQuantity(), regularFont);
+
+        document.add(table);
+        document.close();
+
+        return outputStream.toByteArray();
+    }
+
+    private void addWriteOffTableHeader(PdfPTable table, Font font) {
+        String[] headers = {"ID", "Наименование", "Количество", "Цена"};
+        for (String header : headers) {
+            PdfPCell cell = new PdfPCell(new Paragraph(header, font));
+            cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            table.addCell(cell);
+        }
+    }
+
+    private void addWriteOffRow(PdfPTable table, ProductDTO product, int quantity, Font font) {
+        table.addCell(new PdfPCell(new Paragraph(String.valueOf(product.getId()), font)));
+        table.addCell(new PdfPCell(new Paragraph(product.getName(), font)));
+        table.addCell(new PdfPCell(new Paragraph(String.valueOf(quantity), font)));
+        table.addCell(new PdfPCell(new Paragraph(String.valueOf(product.getPrice() * quantity), font)));
+    }
+
+    public byte[] generateRevaluationAct(List<RevaluationDTO> revaluationList, List<ProductDTO> products) throws DocumentException, IOException {
+        Document document = new Document(PageSize.A4);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        PdfWriter.getInstance(document, outputStream);
+        document.open();
+
+        BaseFont baseFont = BaseFont.createFont(FONT_PATH, BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+        Font headerFont = new Font(baseFont, 12, Font.BOLD);
+        Font regularFont = new Font(baseFont, 10);
+
+        document.add(new Paragraph("Акт переоценки товаров", headerFont));
+        document.add(new Paragraph("Дата: " + java.time.LocalDate.now(), regularFont));
+        document.add(new Paragraph(" "));
+
+        PdfPTable table = new PdfPTable(5);
+        table.setWidthPercentage(100);
+        table.setSpacingBefore(10f);
+
+        addRevaluationTableHeader(table, headerFont);
+
+        for (int i = 0; i < revaluationList.size(); i++) {
+            RevaluationDTO revaluation = revaluationList.get(i);
+            ProductDTO product = products.get(i);
+            addRevaluationRow(table, product, revaluation, regularFont);
+        }
+
+        document.add(table);
+        document.close();
+
+        return outputStream.toByteArray();
+    }
+
+    private void addRevaluationTableHeader(PdfPTable table, Font font) {
+        String[] headers = {"ID", "Наименование", "Старая цена", "Новая цена", "Разница"};
+        for (String header : headers) {
+            PdfPCell cell = new PdfPCell(new Paragraph(header, font));
+            cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            table.addCell(cell);
+        }
+    }
+
+    private void addRevaluationRow(PdfPTable table, ProductDTO product, RevaluationDTO revaluation, Font font) {
+        table.addCell(new PdfPCell(new Paragraph(String.valueOf(product.getId()), font)));
+        table.addCell(new PdfPCell(new Paragraph(product.getName(), font)));
+        table.addCell(new PdfPCell(new Paragraph(String.valueOf(product.getPrice()), font)));
+        table.addCell(new PdfPCell(new Paragraph(String.valueOf(revaluation.getNewPrice()), font)));
+        table.addCell(new PdfPCell(new Paragraph(String.valueOf(revaluation.getNewPrice() - product.getPrice()), font)));
     }
 }

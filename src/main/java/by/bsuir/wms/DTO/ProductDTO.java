@@ -21,4 +21,8 @@ public class ProductDTO {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private Date bestBeforeDate;
     private Integer amount;
+
+    public Integer getId() {
+        return 0;
+    }
 }

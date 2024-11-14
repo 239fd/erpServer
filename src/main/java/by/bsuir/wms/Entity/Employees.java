@@ -60,6 +60,12 @@ public class Employees implements UserDetails {
     public boolean isWorker() {
         return role == Role.ROLE_WORKER;
     }
+    public boolean isAccountant() {
+        return role == Role.ROLE_ACCOUNTANT;
+    }
+    public boolean isManager() {
+        return role == Role.ROLE_MANAGER;
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

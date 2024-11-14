@@ -1,7 +1,6 @@
 package by.bsuir.wms.Service;
 
-import by.bsuir.wms.DTO.DispatchDTO;
-import by.bsuir.wms.DTO.ProductDTO;
+import by.bsuir.wms.DTO.*;
 import by.bsuir.wms.Entity.*;
 import by.bsuir.wms.Entity.Enum.Status;
 import by.bsuir.wms.Exception.AppException;
@@ -15,10 +14,7 @@ import org.springframework.stereotype.Service;
 
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,6 +28,93 @@ public class ProductService {
     private final EmployeesRepository employeesRepository;
     private final PDFService pdfService;
 
+    public byte[] performInventoryCheck(InventoryDTO inventoryDTO) throws DocumentException, IOException {
+        Employees worker = findAccountant();
+        Warehouse warehouse = warehouseRepository.findWarehouseByEmployeesId(worker.getId())
+                .orElseThrow(() -> new RuntimeException("No warehouse for this user"));
+
+        if (inventoryDTO.getIds().size() != inventoryDTO.getAmounts().size()) {
+            throw new AppException("Mistake in input", HttpStatus.BAD_REQUEST);
+        }
+
+        List<Product> products = new ArrayList<>();
+        Map<Integer, Integer> expectedQuantities = new HashMap<>();
+
+        for (int i = 0; i < inventoryDTO.getIds().size(); i++) {
+            Integer productId = inventoryDTO.getIds().get(i);
+            Integer expectedAmount = inventoryDTO.getAmounts().get(i);
+
+            Product product = productRepository.findById(productId)
+                    .orElseThrow(() -> new RuntimeException("No product found for this discrepancy product"));
+
+            products.add(product);
+            expectedQuantities.put(productId, expectedAmount);
+        }
+
+        List<Integer> productsIdsOnWarehouse = productRepository.findIdsByCells_Rack_Warehouse(warehouse);
+
+        for (Integer productId : productsIdsOnWarehouse) {
+            if (!expectedQuantities.containsKey(productId)) {
+                Product product = productRepository.findById(productId)
+                        .orElseThrow(() -> new RuntimeException("Product not found in warehouse"));
+                product.setStatus(Status.nonverified);
+                productRepository.save(product);
+            }
+        }
+
+        List<ProductDTO> productDTOs = products.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+
+        return pdfService.generateInventoryReport(worker.getOrganization().getName(), warehouse.getName(), productDTOs, inventoryDTO.getAmounts(), inventoryDTO.getIds());
+    }
+    public List<ProductDTO> findNonVerified(){
+        Employees worker = findAccountant();
+        warehouseRepository.findWarehouseByEmployeesId(worker.getId())
+                .orElseThrow(() -> new RuntimeException("No warehouse for this user"));
+
+        return productRepository.findAllByStatus(Status.nonverified).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    public byte[] writeOffProduct(WriteOffDTO writeOffDTO) throws DocumentException, IOException {
+
+        Employees worker = findAccountant();
+        warehouseRepository.findWarehouseByEmployeesId(worker.getId())
+                .orElseThrow(() -> new RuntimeException("No warehouse for this user"));
+
+        Product product = productRepository.findById(writeOffDTO.getProductId())
+                .orElseThrow(() -> new AppException("Product not found", HttpStatus.NOT_FOUND));
+
+        if (product.getAmount() < writeOffDTO.getQuantity()) {
+            throw new AppException("Insufficient quantity for write-off", HttpStatus.BAD_REQUEST);
+        }
+
+        product.setAmount(product.getAmount() - writeOffDTO.getQuantity());
+        productRepository.save(product);
+
+        return pdfService.generateWriteOffAct(writeOffDTO, convertToDTO(product));
+    }
+    public byte[] revaluateProducts(List<RevaluationDTO> revaluationList) throws DocumentException, IOException {
+        List<ProductDTO> updatedProducts = new ArrayList<>();
+
+        Employees worker = findAccountant();
+        warehouseRepository.findWarehouseByEmployeesId(worker.getId())
+                .orElseThrow(() -> new RuntimeException("No warehouse for this user"));
+
+        for (RevaluationDTO dto : revaluationList) {
+            Product product = productRepository.findById(dto.getProductId())
+                    .orElseThrow(() -> new AppException("Product not found", HttpStatus.NOT_FOUND));
+
+            product.setPrice(dto.getNewPrice());
+            productRepository.save(product);
+
+            updatedProducts.add(convertToDTO(product));
+        }
+
+        return pdfService.generateRevaluationAct(revaluationList, updatedProducts);
+    }
     public byte[] addProductToCell(List<ProductDTO> productDTOs) throws DocumentException, IOException {
         Employees worker = findCurrentWorker();
         Warehouse warehouse = warehouseRepository.findWarehouseByEmployeesId(worker.getId())
@@ -100,16 +183,12 @@ public class ProductService {
         }
         return pdfService.generateReceiptOrderPDF(placedProducts, ids);
     }
-
     private double usedCapacityInRack(Rack rack) {
         return rack.getCells().stream()
                 .flatMap(cell -> cell.getProducts().stream())
                 .mapToDouble(Product::getWeight)
                 .sum();
     }
-
-
-
     public Map<String, byte[]> dispatchProducts(DispatchDTO dispatchDTO) throws DocumentException, IOException {
 
         Employees worker = findCurrentWorker();
@@ -242,6 +321,12 @@ public class ProductService {
                 .filter(Employees::isWorker)
                 .orElseThrow(() -> new RuntimeException("Current worker not found or does not have WORKER role"));
     }
+    public Employees findAccountant(){
+        String currentUsername = getCurrentUsername();
+        return employeesRepository.findByLogin(currentUsername)
+                .filter(Employees::isAccountant)
+                .orElseThrow(() -> new RuntimeException("Current worker not found or does not have ACCOUNTANT role"));
+    }
     private String getCurrentUsername() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (principal instanceof UserDetails) {
@@ -254,6 +339,6 @@ public class ProductService {
 /*
 TODO
  1)if from supplier do key
- 4)Delete if 0
- 5)Store products not like amount
+ 2)Delete if 0
+ 3)Store products not like amount
 */
