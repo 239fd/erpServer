@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -260,7 +261,7 @@ public class PDFService {
         }
     }
 
-    public byte[] generateWriteOffAct(WriteOffDTO writeOffDTO, ProductDTO product) throws DocumentException, IOException {
+    public byte[] generateWriteOffAct(String organizationName, LocalDate orderDate, String chairman, List<ProductDTO> products) throws DocumentException, IOException {
         Document document = new Document(PageSize.A4);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
@@ -268,43 +269,72 @@ public class PDFService {
         document.open();
 
         BaseFont baseFont = BaseFont.createFont(FONT_PATH, BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
-        Font headerFont = new Font(baseFont, 12, Font.BOLD);
+        Font headerFont = new Font(baseFont, 14, Font.BOLD);
         Font regularFont = new Font(baseFont, 10);
 
-        document.add(new Paragraph("Акт на списание материала", headerFont));
-        document.add(new Paragraph("Дата: " + writeOffDTO.getDate(), regularFont));
-        document.add(new Paragraph("Причина списания: " + writeOffDTO.getReason(), regularFont));
+        Paragraph title = new Paragraph("АКТ НА СПИСАНИЕ СТРОИТЕЛЬНОГО ИНСТРУМЕНТА, ХОЗЯЙСТВЕННОГО ИНВЕНТАРЯ", headerFont);
+        title.setAlignment(Element.ALIGN_CENTER);
+        document.add(title);
+
+        document.add(new Paragraph("Организация: " + organizationName, regularFont));
+        document.add(new Paragraph("Приказ от " + orderDate, regularFont));
+        document.add(new Paragraph(" "));
+        document.add(new Paragraph("Председатель комиссии: " + chairman, regularFont));
         document.add(new Paragraph(" "));
 
-        PdfPTable table = new PdfPTable(4);
+        PdfPTable table = new PdfPTable(7);
         table.setWidthPercentage(100);
         table.setSpacingBefore(10f);
 
-        addWriteOffTableHeader(table, headerFont);
+        String[] headers = {"Инструмент, инвентарь", "Единица измерения", "Количество", "Цена, руб.", "Сумма, руб.", "Годен до", "Примечание"};
+        for (String header : headers) {
+            PdfPCell cell = new PdfPCell(new Paragraph(header, regularFont));
+            cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            table.addCell(cell);
+        }
 
-        addWriteOffRow(table, product, writeOffDTO.getQuantity(), regularFont);
+        int totalQuantity = 0;
+        double totalAmount = 0;
+        double totalSum = 0;
+
+        for (ProductDTO product : products) {
+            int quantity = product.getAmount();
+            double price = product.getPrice();
+            double itemTotal = quantity * price;
+
+            totalQuantity += quantity;
+            totalAmount += itemTotal;
+            totalSum += price;
+
+            table.addCell(new PdfPCell(new Paragraph(product.getName(), regularFont)));
+            table.addCell(new PdfPCell(new Paragraph(product.getUnit(), regularFont)));
+            table.addCell(new PdfPCell(new Paragraph(String.valueOf(quantity), regularFont)));
+            table.addCell(new PdfPCell(new Paragraph(String.format("%.2f", price), regularFont)));
+            table.addCell(new PdfPCell(new Paragraph(String.format("%.2f", itemTotal), regularFont)));
+            table.addCell(new PdfPCell(new Paragraph(product.getBestBeforeDate().toString(), regularFont)));
+            table.addCell(new PdfPCell(new Paragraph("", regularFont)));
+        }
+
+        table.addCell(new PdfPCell(new Paragraph("ВСЕГО ПОДЛЕЖИТ СПИСАНИЮ", regularFont)));
+        table.addCell(new PdfPCell(new Paragraph("", regularFont)));
+        table.addCell(new PdfPCell(new Paragraph(String.valueOf(totalQuantity), regularFont)));
+        table.addCell(new PdfPCell(new Paragraph(String.format("%.2f", totalSum), regularFont)));
+        table.addCell(new PdfPCell(new Paragraph(String.format("%.2f", totalAmount), regularFont)));
+        table.addCell(new PdfPCell(new Paragraph("", regularFont)));
+        table.addCell(new PdfPCell(new Paragraph("", regularFont)));
 
         document.add(table);
+
+        document.add(new Paragraph(" "));
+
+        document.add(new Paragraph("Акт составлен: " + LocalDate.now(), regularFont));
+
         document.close();
 
         return outputStream.toByteArray();
     }
 
-    private void addWriteOffTableHeader(PdfPTable table, Font font) {
-        String[] headers = {"ID", "Наименование", "Количество", "Цена"};
-        for (String header : headers) {
-            PdfPCell cell = new PdfPCell(new Paragraph(header, font));
-            cell.setHorizontalAlignment(Element.ALIGN_CENTER);
-            table.addCell(cell);
-        }
-    }
 
-    private void addWriteOffRow(PdfPTable table, ProductDTO product, int quantity, Font font) {
-        table.addCell(new PdfPCell(new Paragraph(String.valueOf(product.getId()), font)));
-        table.addCell(new PdfPCell(new Paragraph(product.getName(), font)));
-        table.addCell(new PdfPCell(new Paragraph(String.valueOf(quantity), font)));
-        table.addCell(new PdfPCell(new Paragraph(String.valueOf(product.getPrice() * quantity), font)));
-    }
 
     public byte[] generateRevaluationAct(List<RevaluationDTO> revaluationList, List<ProductDTO> products) throws DocumentException, IOException {
         Document document = new Document(PageSize.A4);
