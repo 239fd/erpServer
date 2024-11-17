@@ -2,6 +2,7 @@ package by.bsuir.wms.Service;
 
 import by.bsuir.wms.DTO.DispatchDTO;
 import by.bsuir.wms.DTO.ProductDTO;
+import by.bsuir.wms.Entity.Employees;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
 import org.springframework.stereotype.Service;
@@ -17,7 +18,7 @@ public class PDFService {
     private static final String FONT_PATH = "src/main/resources/fonts/arial.ttf";
     private int counter = 1;
 
-    public byte[] generateReceiptOrderPDF(List<ProductDTO> products, List<Integer> ids) throws DocumentException, IOException {
+    public byte[] generateReceiptOrderPDF(List<ProductDTO> products, List<Integer> ids, Employees employees) throws DocumentException, IOException {
         Document document = new Document(PageSize.A4);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
@@ -44,12 +45,13 @@ public class PDFService {
         }
 
         document.add(table);
+        document.add(new Paragraph("Прием товара осуществил рабочий: " + employees.getSecondName() + " " + employees.getFirstName(), regularFont));
         document.close();
 
         return outputStream.toByteArray();
     }
 
-    public byte[] generateDispatchOrderPDF(List<ProductDTO> products, List<Integer> ids) throws DocumentException, IOException {
+    public byte[] generateDispatchOrderPDF(List<ProductDTO> products, List<Integer> ids, Employees employees) throws DocumentException, IOException {
         Document document = new Document(PageSize.A4);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
@@ -76,6 +78,7 @@ public class PDFService {
         }
 
         document.add(table);
+        document.add(new Paragraph("Прием товара осуществил рабочий: " + employees.getSecondName() + " " + employees.getFirstName(), regularFont));
         document.close();
 
         return outputStream.toByteArray();

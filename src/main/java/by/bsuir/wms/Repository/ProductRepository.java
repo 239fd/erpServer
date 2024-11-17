@@ -16,5 +16,9 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     @Query("SELECT p.id FROM Product p JOIN p.cells c JOIN c.rack r JOIN r.warehouse w WHERE w = :warehouse")
     List<Integer> findIdsByCells_Rack_Warehouse(@Param("warehouse") Warehouse warehouse);
     List<Product> findAllByStatus(Status status);
+    List<Product> findAllByName(String name);
+    @Query("SELECT SUM(p.amount) FROM Product p WHERE p.name = :name")
+    int findTotalInventoryByName(@Param("name") String name);
+
 
 }

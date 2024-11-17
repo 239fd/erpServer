@@ -16,6 +16,9 @@ public class Stock {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @Column(name = "name", nullable = false)
+    private String name;
+
     @Column(name = "amount", nullable = false)
     private Integer amount;
 
@@ -23,7 +26,4 @@ public class Stock {
     @JoinColumn(name = "suppliers_id")
     private Supplier supplier;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "products_id")
-    private Product product;
 }

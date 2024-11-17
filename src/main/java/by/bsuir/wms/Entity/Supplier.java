@@ -20,7 +20,7 @@ public class Supplier {
     private Integer id;
 
     @Column(name = "INN")
-    private String inn;
+    private String INN;
 
     @Column(name = "name")
     private String name;

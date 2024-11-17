@@ -3,6 +3,7 @@ package by.bsuir.wms.Service;
 import by.bsuir.wms.DTO.*;
 import by.bsuir.wms.Entity.*;
 import by.bsuir.wms.Entity.Enum.Status;
+import by.bsuir.wms.Entity.Enum.Type;
 import by.bsuir.wms.Exception.AppException;
 import by.bsuir.wms.Repository.*;
 import com.itextpdf.text.DocumentException;
@@ -17,6 +18,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +30,7 @@ public class ProductService {
     private final CellRepository cellRepository;
     private final EmployeesRepository employeesRepository;
     private final PDFService pdfService;
+    private final ProductSalesRepository productSalesHistoryRepository;
 
     public byte[] performInventoryCheck(InventoryDTO inventoryDTO) throws DocumentException, IOException {
         Employees worker = findAccountant();
@@ -145,7 +148,6 @@ public class ProductService {
         return pdfService.generateRevaluationReport(revaluatedProducts, revaluatedPrices);
     }
 
-
     public byte[] addProductToCell(List<ProductDTO> productDTOs) throws DocumentException, IOException {
         Employees worker = findCurrentWorker();
         Warehouse warehouse = warehouseRepository.findWarehouseByEmployeesId(worker.getId())
@@ -208,70 +210,61 @@ public class ProductService {
                         ids.add(product.getId());
                         Cell cell = (Cell) dataForSave.get(i + 1);
                         cellRepository.save(cell);
+
+                        logProductHistory(product, warehouse, worker, product.getAmount(), Type.accept);
                     }
                 }
             }
         }
-        return pdfService.generateReceiptOrderPDF(placedProducts, ids);
+        return pdfService.generateReceiptOrderPDF(placedProducts, ids, worker);
     }
 
     public Map<String, byte[]> dispatchProducts(DispatchDTO dispatchDTO) throws DocumentException, IOException {
-
         Employees worker = findCurrentWorker();
         Warehouse warehouse = warehouseRepository.findWarehouseByEmployeesId(worker.getId())
                 .orElseThrow(() -> new AppException("No warehouse for this user", HttpStatus.CONFLICT));
 
-        List<Product> products = new ArrayList<>();
-        for(int i = 0; i < dispatchDTO.getProductIds().size(); i++) {
-            products.add(productRepository.findAllByIdAndCells_Rack_Warehouse(dispatchDTO.getProductIds().get(i), warehouse));
-        }
+        List<Product> products = dispatchDTO.getProductIds().stream()
+                .map(productId -> productRepository.findAllByIdAndCells_Rack_Warehouse(productId, warehouse))
+                .filter(Objects::nonNull)
+                .toList();
 
-        for (Product value : products) {
-            if (value == null) {
-                throw new AppException("Mistake with your input", HttpStatus.CONFLICT);
-            }
-        }
         if (products.isEmpty()) {
             throw new AppException("No products found for dispatch", HttpStatus.CONFLICT);
+        }
+
+        boolean isQuantitySufficient = IntStream.range(0, products.size())
+                .allMatch(i -> products.get(i).getAmount() >= dispatchDTO.getAmounts().get(i));
+
+        if (!isQuantitySufficient) {
+            throw new AppException("Insufficient quantity for one of the products", HttpStatus.CONFLICT);
         }
 
         List<ProductDTO> productDTOs = products.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
 
-        boolean check = true;
-        for(int i = 0; i < products.size(); i++){
+        for (int i = 0; i < products.size(); i++) {
             Product product = products.get(i);
             int dispatchAmount = dispatchDTO.getAmounts().get(i);
 
-            if (product.getAmount() < dispatchAmount) {
-                check = false;
-                break;
-            }
-        }
+            product.setAmount(product.getAmount() - dispatchAmount);
 
-        if(check){
-            for (int i = 0; i < products.size(); i++) {
-                Product product = products.get(i);
-                int dispatchAmount = dispatchDTO.getAmounts().get(i);
-                product.setAmount(product.getAmount() - dispatchAmount);
-
-                if (product.getAmount() == 0) {
-                    for (Cell cell : product.getCells()) {
-                        cell.getProducts().remove(product);
-                        cellRepository.save(cell);
-                    }
-                    product.getCells().clear();
-                }
+            if (product.getAmount() <= 0) {
+                product.getCells().forEach(cell -> {
+                    cell.getProducts().remove(product);
+                    cellRepository.save(cell);
+                });
+                product.getCells().clear();
+                productRepository.delete(product);
+            } else {
                 productRepository.save(product);
             }
-        }
-        else{
-            throw new AppException("Insufficient quantity for one of product", HttpStatus.CONFLICT);
+
+            logProductHistory(product, warehouse, worker, dispatchAmount, Type.dispatch);
         }
 
-
-        byte[] orderPDF = pdfService.generateDispatchOrderPDF(productDTOs, dispatchDTO.getProductIds());
+        byte[] orderPDF = pdfService.generateDispatchOrderPDF(productDTOs, dispatchDTO.getProductIds(), worker);
         byte[] ttnPDF = pdfService.generateTTN(dispatchDTO, productDTOs);
 
         Map<String, byte[]> pdfFiles = new HashMap<>();
@@ -280,6 +273,7 @@ public class ProductService {
 
         return pdfFiles;
     }
+
 
     public List<ProductDTO> findNonVerified(){
         Employees worker = findAccountant();
@@ -361,6 +355,18 @@ public class ProductService {
         product.setBestBeforeDate(productDTO.getBestBeforeDate());
         product.setStatus(Status.accepted);
         return product;
+    }
+
+    private void logProductHistory(Product product, Warehouse warehouse, Employees employee, int quantity, Type operationType) {
+        ProductSalesHistory salesHistory = new ProductSalesHistory();
+        salesHistory.setProduct(product);
+        salesHistory.setDate(LocalDate.now().atStartOfDay());
+        salesHistory.setQuantity(quantity);
+        salesHistory.setTransactionType(operationType);
+        salesHistory.setWarehouse(warehouse);
+        salesHistory.setEmployees(employee);
+
+        productSalesHistoryRepository.save(salesHistory);
     }
 
     private Employees findCurrentWorker() {

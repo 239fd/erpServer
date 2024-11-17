@@ -30,7 +30,8 @@ public class OrganizationService {
         Optional<Organization> organizations = organizationRepository.findOrganizationByEmployees_Id(director.getId());
         if(organizations.isPresent()) {
             throw new RuntimeException("User have organization yet");
-        }else{
+        }
+        else{
             Organization savedOrganization = organizationRepository.save(organization);
             director.setOrganization(savedOrganization);
             employeesRepository.save(director);
@@ -75,7 +76,7 @@ public class OrganizationService {
         return new OrganizationDTO(organization);
     }
 
-    public Employees findCurrentDirector() {
+    private Employees findCurrentDirector() {
         String currentUsername = getCurrentUsername();
         return employeesRepository.findByLogin(currentUsername)
                 .filter(Employees::isDirector)

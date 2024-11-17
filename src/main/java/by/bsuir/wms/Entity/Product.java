@@ -58,6 +58,5 @@ public class Product {
     private Set<Cell> cells = new HashSet<>();
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Stock> stocks;
-
+    private List<ProductSalesHistory> salesHistory;
 }

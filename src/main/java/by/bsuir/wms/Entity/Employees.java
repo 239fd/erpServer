@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 @Entity
 @Getter
@@ -53,6 +54,9 @@ public class Employees implements UserDetails {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "warehouse_id")
     private Warehouse warehouse;
+
+    @OneToMany(mappedBy = "employees", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductSalesHistory> salesHistory;
 
     public boolean isDirector() {
         return role == Role.ROLE_DIRECTOR;
