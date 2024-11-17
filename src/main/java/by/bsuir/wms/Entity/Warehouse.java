@@ -25,6 +25,12 @@ public class Warehouse {
     @Column(name="address")
     private String address;
 
+    @Column(name="latitude")
+    private double latitude;
+
+    @Column(name="longitude")
+    private double longitude;
+
     @OneToMany(mappedBy = "warehouse", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Rack> racks;
 

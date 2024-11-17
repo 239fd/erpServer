@@ -22,12 +22,19 @@ public class SupplierService {
 
     private final SupplierRepository supplierRepository;
     private final EmployeesRepository employeesRepository;
+    private final GeocodingService geocodingService;
+
 
     public void createSupplierOrganization(OrganizationDTO organizationDTO) {
-         Supplier supplier = Supplier.builder()
+
+        double[] coordinates = geocodingService.getCoordinatesByAddress(organizationDTO.getAddress());
+
+        Supplier supplier = Supplier.builder()
                 .name(organizationDTO.getName())
                 .INN(organizationDTO.getInn())
                 .address(organizationDTO.getAddress())
+                 .latitude(coordinates[0])
+                 .longitude(coordinates[1])
                 .build();
 
         findCurrentManager();
@@ -51,7 +58,7 @@ public class SupplierService {
         supplierRepository.deleteById(supplier.getId());
     }
 
-    public void updateOrganization(OrganizationDTO organizationDTO) {
+    public void updateSupplier(OrganizationDTO organizationDTO) {
 
         findCurrentManager();
 
@@ -63,7 +70,10 @@ public class SupplierService {
             supplier.setName(organizationDTO.getName());
         }
         if (organizationDTO.getAddress() != null) {
+            double[] coordinates = geocodingService.getCoordinatesByAddress(organizationDTO.getAddress());
             supplier.setAddress(organizationDTO.getAddress());
+            supplier.setLatitude(coordinates[0]);
+            supplier.setLongitude(coordinates[1]);
 
         }
         supplierRepository.save(supplier);

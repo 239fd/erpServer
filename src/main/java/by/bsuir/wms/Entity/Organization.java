@@ -28,6 +28,12 @@ public class Organization {
     @Column(name = "address")
     private String address;
 
+    @Column(name="latitude")
+    private double latitude;
+
+    @Column(name="longitude")
+    private double longitude;
+
     @OneToMany(mappedBy = "organization", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Warehouse> warehouses;
 

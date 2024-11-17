@@ -60,7 +60,7 @@ public class ManagerController {
 
     @PutMapping("/supplier")
     ResponseEntity<ApiResponse<OrganizationDTO>> updateSupplier(@RequestBody OrganizationDTO organizationDTO) {
-        supplierService.updateOrganization(organizationDTO);
+        supplierService.updateSupplier(organizationDTO);
 
         ApiResponse<OrganizationDTO> response = ApiResponse.<OrganizationDTO>builder()
                 .data(organizationDTO)

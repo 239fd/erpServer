@@ -18,20 +18,26 @@ public class OrganizationService {
 
     private final OrganizationRepository organizationRepository;
     private final EmployeesRepository employeesRepository;
+    private final GeocodingService geocodingService;
 
     public void createOrganization(OrganizationDTO organizationDTO) {
+
+        double[] coordinates = geocodingService.getCoordinatesByAddress(organizationDTO.getAddress());
+
         Organization organization = Organization.builder()
                 .name(organizationDTO.getName())
                 .INN(organizationDTO.getInn())
                 .address(organizationDTO.getAddress())
+                .latitude(coordinates[0])
+                .longitude(coordinates[1])
                 .build();
 
         Employees director = findCurrentDirector();
         Optional<Organization> organizations = organizationRepository.findOrganizationByEmployees_Id(director.getId());
-        if(organizations.isPresent()) {
-            throw new RuntimeException("User have organization yet");
-        }
-        else{
+
+        if (organizations.isPresent()) {
+            throw new RuntimeException("User already has an organization");
+        } else {
             Organization savedOrganization = organizationRepository.save(organization);
             director.setOrganization(savedOrganization);
             employeesRepository.save(director);
@@ -59,8 +65,10 @@ public class OrganizationService {
             organization.setINN(organizationDTO.getInn());
         }
         if (organizationDTO.getAddress() != null) {
+            double[] coordinates = geocodingService.getCoordinatesByAddress(organizationDTO.getAddress());
             organization.setAddress(organizationDTO.getAddress());
-
+            organization.setLatitude(coordinates[0]);
+            organization.setLongitude(coordinates[1]);
         }
         organizationRepository.save(organization);
 

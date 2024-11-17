@@ -5,6 +5,7 @@ import by.bsuir.wms.DTO.CredentialsDTO;
 import by.bsuir.wms.DTO.EmployeesDTO;
 import by.bsuir.wms.DTO.SignUpDTO;
 import by.bsuir.wms.Service.EmployeesService;
+import by.bsuir.wms.Service.RouteService;
 import by.bsuir.wms.config.UserAuthProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,7 @@ public class AuthController {
 
     private final EmployeesService employeesService;
     private final UserAuthProvider userAuthProvider;
+    private final RouteService routeService;
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<EmployeesDTO>> login(@RequestBody CredentialsDTO credentialsDTO){
@@ -37,6 +39,7 @@ public class AuthController {
     public ResponseEntity<ApiResponse<EmployeesDTO>> register(@RequestBody SignUpDTO signUpDTO) {
         EmployeesDTO employeesDTO = employeesService.register(signUpDTO);
         employeesDTO.setToken(userAuthProvider.createToken(signUpDTO.getLogin()));
+        System.out.println(routeService.getDistance(27.593515, 53.907509, 27.596479, 53.910712));
         ApiResponse<EmployeesDTO> response = ApiResponse.<EmployeesDTO>builder()
                 .data(employeesDTO)
                 .status(true)

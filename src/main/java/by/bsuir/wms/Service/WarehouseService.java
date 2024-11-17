@@ -22,6 +22,7 @@ public class WarehouseService {
     private final WarehouseRepository warehouseRepository;
     private final EmployeesRepository employeesRepository;
     private final OrganizationRepository organizationRepository;
+    private  final GeocodingService geocodingService;
 
     public void createWarehouse( WarehouseRequestDTO warehouseRequestDTO) {
 
@@ -30,10 +31,14 @@ public class WarehouseService {
         Organization organization = organizationRepository.getOrganizationByINN(director.getOrganization().getINN())
                 .orElseThrow(() -> new RuntimeException("Organization not found"));
 
+        double[] coordinates = geocodingService.getCoordinatesByAddress(warehouseRequestDTO.getAddress());
+
         Warehouse warehouse = Warehouse.builder()
                 .name(warehouseRequestDTO.getName())
                 .address(warehouseRequestDTO.getAddress())
                 .organization(organization)
+                .latitude(coordinates[0])
+                .longitude(coordinates[1])
                 .build();
 
         List<Rack> racks = warehouseRequestDTO.getRacks().stream()
@@ -100,7 +105,14 @@ public class WarehouseService {
                 .orElseThrow(() -> new RuntimeException("Warehouse not found"));
 
         warehouse.setName(warehouseDTO.getName());
-        warehouse.setAddress(warehouseDTO.getAddress());
+
+        if (warehouseDTO.getAddress() != null) {
+            double[] coordinates = geocodingService.getCoordinatesByAddress(warehouseDTO.getAddress());
+            warehouse.setAddress(warehouseDTO.getAddress());
+            warehouse.setLatitude(coordinates[0]);
+            warehouse.setLongitude(coordinates[1]);
+        }
+
         warehouseRepository.save(warehouse);
 
         return convertToDTO(warehouse);
