@@ -100,9 +100,10 @@ public class ManagerController {
 
     @PostMapping("/stock")
     public ResponseEntity<ApiResponse<StockDTO>> createStock(@RequestParam String name,
-                                              @RequestParam int amount,
-                                              @RequestParam int suppliersId) {
-        StockDTO stocks = stocksService.createStock(name, amount, suppliersId);
+                                                             @RequestParam int amount,
+                                                             @RequestParam double price,
+                                                             @RequestParam int suppliersId) {
+        StockDTO stocks = stocksService.createStock(name, amount, suppliersId,price);
         ApiResponse<StockDTO> response = ApiResponse.<StockDTO>builder()
                 .status(true)
                 .message("Update stock")
@@ -126,8 +127,9 @@ public class ManagerController {
     public ResponseEntity<ApiResponse<StockDTO>> updateStock(@RequestParam int id,
                                                              @RequestParam(required = false) Optional<String> name,
                                                              @RequestParam(required = false) Optional<Integer> amount,
+                                                             @RequestParam(required = false) Optional<Double> price,
                                                              @RequestParam(required = false) Optional<Integer> suppliersId) {
-        StockDTO updatedOrder = stocksService.updateStock(id, name, amount, suppliersId);
+        StockDTO updatedOrder = stocksService.updateStock(id, name, amount, suppliersId, price);
         ApiResponse<StockDTO> response = ApiResponse.<StockDTO>builder()
                 .status(true)
                 .message("Update stock")

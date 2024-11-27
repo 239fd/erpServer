@@ -62,7 +62,7 @@ public class EmployeesService {
             throw new AppException("There are no warehouse with this code", HttpStatus.CONFLICT);
         }
         Organization organization = organizationRepository.getOrganizationByINN(signUpDTO.getOrganizationId().substring(0, 9))
-                .orElseThrow(() -> new RuntimeException("Organization not found"));
+                .orElseThrow(() -> new AppException("Organization not found", HttpStatus.CONFLICT));
 
         employees.setWarehouse(warehouseRepository.getWarehouseById(Integer.valueOf((signUpDTO.getOrganizationId()).substring(9))));
         employees.setOrganization(organization);

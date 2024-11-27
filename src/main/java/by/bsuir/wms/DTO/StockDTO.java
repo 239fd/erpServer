@@ -11,4 +11,5 @@ public class StockDTO {
     private int id;
     private String name;
     private int amount;
+    private double price;
 }

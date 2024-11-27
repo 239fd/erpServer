@@ -39,7 +39,6 @@ public class AuthController {
     public ResponseEntity<ApiResponse<EmployeesDTO>> register(@RequestBody SignUpDTO signUpDTO) {
         EmployeesDTO employeesDTO = employeesService.register(signUpDTO);
         employeesDTO.setToken(userAuthProvider.createToken(signUpDTO.getLogin()));
-        System.out.println(routeService.getDistance(27.593515, 53.907509, 27.596479, 53.910712));
         ApiResponse<EmployeesDTO> response = ApiResponse.<EmployeesDTO>builder()
                 .data(employeesDTO)
                 .status(true)

@@ -22,6 +22,8 @@ public class Stock {
     @Column(name = "amount", nullable = false)
     private Integer amount;
 
+    private Double price;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "suppliers_id")
     private Supplier supplier;

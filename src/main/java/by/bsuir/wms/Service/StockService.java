@@ -26,7 +26,7 @@ public class StockService {
     private final SupplierRepository supplierRepository;
     private final EmployeesRepository employeesRepository;
 
-    public StockDTO createStock(String name, int amount, int suppliersId) {
+    public StockDTO createStock(String name, int amount, int suppliersId, double price) {
         findCurrentManager();
 
         Supplier supplier = supplierRepository.findById(suppliersId)
@@ -36,6 +36,7 @@ public class StockService {
         stock.setName(name);
         stock.setAmount(amount);
         stock.setSupplier(supplier);
+        stock.setPrice(price);
 
         StockRepository.save(stock);
 
@@ -52,12 +53,13 @@ public class StockService {
         return stockDTOs;
     }
 
-    public StockDTO updateStock(int id, Optional<String> name, Optional<Integer> amount, Optional<Integer> suppliersId) {
+    public StockDTO updateStock(int id, Optional<String> name, Optional<Integer> amount, Optional<Integer> suppliersId, Optional<Double> price) {
         Stock stock = StockRepository.findById(id)
                 .orElseThrow(() -> new AppException("Stock not found", HttpStatus.NOT_FOUND));
 
         name.ifPresent(stock::setName);
         amount.ifPresent(stock::setAmount);
+        price.ifPresent(stock::setPrice);
 
         suppliersId.ifPresent(supId -> {
             Supplier supplier = supplierRepository.findById(supId)
@@ -75,6 +77,7 @@ public class StockService {
         stockDTO.setId(stock.getId());
         stockDTO.setName(stock.getName());
         stockDTO.setAmount(stock.getAmount());
+        stockDTO.setPrice(stock.getPrice());
         return stockDTO;
     }
 

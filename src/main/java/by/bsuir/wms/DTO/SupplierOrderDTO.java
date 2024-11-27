@@ -11,5 +11,7 @@ public class SupplierOrderDTO {
     private final SupplierDataDTO supplier;
     private final String productName;
     private final int quantity;
+    private final double price;
+    private final double deliveryCost;
 
 }
