@@ -1,14 +1,8 @@
 package by.bsuir.wms.Controller;
 
 import by.bsuir.wms.API.ApiResponse;
-import by.bsuir.wms.DTO.OrganizationDTO;
-import by.bsuir.wms.DTO.StockDTO;
-import by.bsuir.wms.DTO.SupplierDTO;
-import by.bsuir.wms.Entity.Supplier;
-import by.bsuir.wms.Service.DemandForecastService;
-import by.bsuir.wms.Service.OrderService;
-import by.bsuir.wms.Service.StockService;
-import by.bsuir.wms.Service.SupplierService;
+import by.bsuir.wms.DTO.*;
+import by.bsuir.wms.Service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +25,7 @@ public class ManagerController {
     private final DemandForecastService demandForecastService;
     private final StockService stocksService;
     private final OrderService orderService;
+    private final ProductService productService;
 
     @PostMapping("/supplier")
     ResponseEntity<ApiResponse<OrganizationDTO>> createSupplier(@RequestBody OrganizationDTO organizationDTO) {
@@ -46,10 +41,10 @@ public class ManagerController {
     }
 
     @GetMapping("/supplier")
-    ResponseEntity<ApiResponse<List<Supplier>>> getSuppliers() {
-        List<Supplier> suppliers = supplierService.getSuppliers();
+    ResponseEntity<ApiResponse<List<SupplierDataDTO>>> getSuppliers() {
+        List<SupplierDataDTO> suppliers = supplierService.getSuppliers();
 
-        ApiResponse<List<Supplier>> response = ApiResponse.<List<Supplier>>builder()
+        ApiResponse<List<SupplierDataDTO>> response = ApiResponse.<List<SupplierDataDTO>>builder()
                 .data(suppliers)
                 .status(true)
                 .message("Supplier created successfully")
@@ -154,5 +149,17 @@ public class ManagerController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
+    @GetMapping("/stored-products")
+    public ResponseEntity<ApiResponse<List<ProductDTO>>> getStoredProducts() {
+        List<ProductDTO> productDTOs = productService.getStoredProducts();
+        ApiResponse<List<ProductDTO>> response = ApiResponse.<List<ProductDTO>>builder()
+                .data(productDTOs)
+                .status(true)
+                .message("Products get successful!")
+                .build();
+        return ResponseEntity.ok(response);
+    }
+
+
 }
 

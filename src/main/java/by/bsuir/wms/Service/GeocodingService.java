@@ -32,14 +32,13 @@ public class GeocodingService {
             String response = restTemplate.getForObject(url, String.class);
 
             if (response == null || response.isEmpty()) {
-                throw new RuntimeException("Unable to get coordinates for the provided address");
+                throw new RuntimeException("Невозможно получить координаты для данного адреса");
             }
-            System.out.println("Yandex Geocoding API response: " + response);
+
             double[] coordinates = new double[2];
             try {
                 coordinates = getCoordinatesFromXml(response);
-                System.out.println("Latitude: " + coordinates[0]);
-                System.out.println("Longitude: " + coordinates[1]);
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -50,7 +49,7 @@ public class GeocodingService {
 
                 return new double[]{lat, lon};
             } else {
-                throw new RuntimeException("No coordinates found for the provided address");
+                throw new RuntimeException("Не найдено координат для данного адреса");
             }
 
         } catch (Exception e) {

@@ -13,6 +13,7 @@ java {
     }
 }
 
+
 configurations {
     compileOnly {
         extendsFrom annotationProcessor
@@ -21,6 +22,10 @@ configurations {
 
 repositories {
     mavenCentral()
+}
+
+test {
+    systemProperty 'spring.profiles.active', 'test'
 }
 
 dependencies {
@@ -36,6 +41,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'com.auth0:java-jwt:4.3.0'
     implementation group: 'com.itextpdf', name: 'itextpdf', version: '5.5.13.4'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
     runtimeOnly 'com.mysql:mysql-connector-j'
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'

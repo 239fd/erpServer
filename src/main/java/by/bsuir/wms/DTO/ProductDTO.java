@@ -11,6 +11,7 @@ import java.sql.Date;
 @AllArgsConstructor
 @Builder
 public class ProductDTO {
+    private int id;
     private String name;
     private String unit;
     private Double price;
@@ -22,7 +23,4 @@ public class ProductDTO {
     private Date bestBeforeDate;
     private Integer amount;
 
-    public Integer getId() {
-        return 0;
-    }
 }

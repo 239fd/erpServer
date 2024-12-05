@@ -2,6 +2,7 @@ package by.bsuir.wms.Service;
 
 import by.bsuir.wms.DTO.OrganizationDTO;
 import by.bsuir.wms.DTO.SupplierDTO;
+import by.bsuir.wms.DTO.SupplierDataDTO;
 import by.bsuir.wms.Entity.Employees;
 import by.bsuir.wms.Entity.Supplier;
 import by.bsuir.wms.Exception.AppException;
@@ -13,6 +14,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -80,9 +83,14 @@ public class SupplierService {
 
     }
 
-    public List<Supplier> getSuppliers(){
+    public List<SupplierDataDTO> getSuppliers(){
         findCurrentManager();
-        return supplierRepository.findAll();
+        List<SupplierDataDTO> suppliers = new ArrayList<>();
+        List<Supplier> suppliersList = supplierRepository.findAll();
+        for (Supplier supplier : suppliersList) {
+            suppliers.add(conertToDTO(Collections.singletonList(supplier)));
+        }
+         return suppliers;
     }
 
     private void findCurrentManager() {
@@ -99,6 +107,15 @@ public class SupplierService {
         } else {
             return principal.toString();
         }
+    }
+
+    private SupplierDataDTO conertToDTO(List<Supplier> suppliers) {
+        SupplierDataDTO supplierDTO = new SupplierDataDTO();
+        supplierDTO.setId(suppliers.get(0).getId());
+        supplierDTO.setName(suppliers.get(0).getName());
+        supplierDTO.setInn(suppliers.get(0).getINN());
+        supplierDTO.setAddress(suppliers.get(0).getAddress());
+        return supplierDTO;
     }
 }
 // TODO

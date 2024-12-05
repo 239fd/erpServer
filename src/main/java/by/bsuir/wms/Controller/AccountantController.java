@@ -87,4 +87,15 @@ public class AccountantController {
 
     }
 
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<ProductDTO>>> getStoredProducts() {
+        List<ProductDTO> productDTOs = productService.getStoredProducts();
+        ApiResponse<List<ProductDTO>> response = ApiResponse.<List<ProductDTO>>builder()
+                .data(productDTOs)
+                .status(true)
+                .message("Products get successful!")
+                .build();
+        return ResponseEntity.ok(response);
+    }
+
 }

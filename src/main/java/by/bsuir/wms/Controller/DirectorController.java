@@ -5,6 +5,7 @@ import by.bsuir.wms.DTO.OrganizationDTO;
 import by.bsuir.wms.DTO.WarehouseDTO;
 import by.bsuir.wms.DTO.WarehouseRequestDTO;
 import by.bsuir.wms.Service.OrganizationService;
+import by.bsuir.wms.Service.TransactionService;
 import by.bsuir.wms.Service.WarehouseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @CrossOrigin(maxAge = 3600L)
 @RestController
@@ -22,6 +24,7 @@ public class DirectorController {
 
     private final OrganizationService organizationService;
     private final WarehouseService warehouseService;
+    private final TransactionService transactionService;
 
     @PostMapping("/organization")
     public ResponseEntity<ApiResponse<OrganizationDTO>> createOrganization(@RequestBody OrganizationDTO organizationDTO) {
@@ -128,4 +131,12 @@ public class DirectorController {
                 .build();
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/transactions")
+    public ResponseEntity<Map<String, Map<String, Integer>>> getTransactionsSummary() {
+        Map<String, Map<String, Integer>> transactionsSummary = transactionService.getTransactionsSummary();
+        return ResponseEntity.ok(transactionsSummary);
+    }
+
+
 }

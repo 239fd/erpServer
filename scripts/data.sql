@@ -30,11 +30,11 @@ CREATE TABLE IF NOT EXISTS `mydb`.`products` (
 CREATE TABLE IF NOT EXISTS `mydb`.`stocks` (
                                                `id` INT NOT NULL AUTO_INCREMENT,
                                                `amount` INT NOT NULL,
+                                               `price` DOUBLE NOT NULL,
                                                `suppliers_id` INT NOT NULL,
                                                `products_id` INT NOT NULL,
                                                PRIMARY KEY (`id`, `suppliers_id`, `products_id`),
-                                               FOREIGN KEY (`suppliers_id`) REFERENCES `mydb`.`suppliers` (`id`),
-                                               FOREIGN KEY (`products_id`) REFERENCES `mydb`.`products` (`id`)
+                                               FOREIGN KEY (`suppliers_id`) REFERENCES `mydb`.`suppliers` (`id`)
 ) ENGINE = InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `mydb`.`organization` (

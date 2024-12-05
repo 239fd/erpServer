@@ -33,6 +33,7 @@ public class WorkerController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"receipt_order.pdf\"")
                 .contentType(MediaType.APPLICATION_PDF)
+                .contentLength(pdfContent.length)
                 .body(pdfContent);
     }
 

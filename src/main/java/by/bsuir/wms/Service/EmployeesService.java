@@ -58,11 +58,13 @@ public class EmployeesService {
         checkForCorrectInput(signUpDTO);
         Employees employees = employeesMapper.signUpToEmployee(signUpDTO);
 
-        if(warehouseRepository.getWarehouseById(Integer.valueOf((signUpDTO.getOrganizationId()).substring(9))) == null){
-            throw new AppException("There are no warehouse with this code", HttpStatus.CONFLICT);
-        }
         Organization organization = organizationRepository.getOrganizationByINN(signUpDTO.getOrganizationId().substring(0, 9))
-                .orElseThrow(() -> new AppException("Organization not found", HttpStatus.CONFLICT));
+                .orElseThrow(() -> new AppException("Организация не найдена", HttpStatus.CONFLICT));
+
+        if(warehouseRepository.getWarehouseById(Integer.valueOf((signUpDTO.getOrganizationId()).substring(9))) == null){
+            throw new AppException("Нет складов с таким номером", HttpStatus.CONFLICT);
+        }
+
 
         employees.setWarehouse(warehouseRepository.getWarehouseById(Integer.valueOf((signUpDTO.getOrganizationId()).substring(9))));
         employees.setOrganization(organization);
@@ -73,6 +75,7 @@ public class EmployeesService {
         return EmployeesDTO.builder()
                 .id(employees.getId())
                 .login(employees.getLogin())
+                .role(employees.getRole())
                 .build();
     }
 
@@ -87,6 +90,7 @@ public class EmployeesService {
         return EmployeesDTO.builder()
                 .id(employees.getId())
                 .login(employees.getLogin())
+                .role(employees.getRole())
                 .build();
     }
 
